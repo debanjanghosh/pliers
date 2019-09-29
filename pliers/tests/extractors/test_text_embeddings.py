@@ -106,13 +106,14 @@ def test_elmo_extractors():
     assert np.isclose(vector[0][11],0.15085818,1e-10)
     assert np.isclose(vector[0][36],-0.1827029,1e-10)
 
-
+'''
 def test_skipthought_extractors():
     
     # Note: skipthought is based on Theano 1.0.4 and
     # Numpy <1.16.3 
     # To run the following test case please 
     # change the Theano and Numpy versions
+    # currently this function is commented out
 
     print('embedding test')
     #testing skipthought 
