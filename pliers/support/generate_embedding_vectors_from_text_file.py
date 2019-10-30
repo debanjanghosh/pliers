@@ -1,8 +1,7 @@
 import sys
 import argparse
 import numpy as np 
-from pliers.extractors.text_encoding import DirectSentenceExtractor,\
-embedding_methods,DirectTextExtractorInterface
+from pliers.extractors.text_encoding import DirectSentenceExtractor,embedding_methods,DirectTextExtractorInterface
 
 #
 # processing parameers
@@ -54,7 +53,10 @@ def parseArguments():
 
     
     args = parser.parse_args()
-       
+
+    
+
+    
     return args
 
 #######################################
@@ -65,29 +67,32 @@ def parseArguments():
 
 def main():
 
+    debug_mode = 0;
+    
     #
     # parameter processing
     #
     
     arguments = parseArguments();
-
     inputFile    = arguments.input;
     outputPrefix = arguments.output_prefix;
     outputType   = arguments.output_type;
-    
+
     method = arguments.method;
     embedding = method;
+    dimensionality = arguments.dimensionality;
+    corpus         = arguments.corpus;
+    
     if (method == "glove") | (method == "word2vec") | (method == "fasttext"):
         method    = 'averageWordEmbedding';
+        if (method == "glove") & ((dimensionality == 50)|(dimensionality == 100)|(dimensionality == 200)):
+            corpus = '6B';
     elif method == "elmo":
         dimensionality = 1000;
     elif method == "bert":
         dimensionality = 1000;
     else:
          print("error: unknown method " + method); sys.exit(1);
-        
-    dimensionality = arguments.dimensionality;
-    corpus         = arguments.corpus;
 
     content_only   = arguments.content_only;
     stopWords      = arguments.stopWords;
@@ -104,15 +109,19 @@ def main():
     # execution
     #
 
-    lines = [line.rstrip('\n') for line in open(inputFile)]
+    ## grab all the lines in the input text file
 
-    sys.exit(1);
-
+    lines  = [line.rstrip('\n') for line in open(inputFile)]
+    nlines = len(lines); 
+    
     ## instantiate an extractor
 
-    print("instantiating extractor (may take a while");
-        
-    extractor = DirectTextExtractorInterface(method=method,\
+    print("extractor: instantiating (may take a while)...",end =" ");
+
+    if debug_mode:
+        pass
+    else:
+        extractor = DirectTextExtractorInterface(method=method,\
                                              embedding=embedding,\
                                              dimensionality=dimensionality,\
                                              corpus=corpus,\
@@ -121,19 +130,48 @@ def main():
                                              stopWords=stopWords,\
                                              unk_vector=unk_vector);
 
-        
-    ## grab all the lines in the input text file
-
-    #lines = [for line in open 
-
-    ##
+    print("done!");
+   
+    ## generate vectors
+    
+    print("generator: outputting vectors",end = " ");
 
     if outputType == "one_vector_per_line":
         # embed all lines at once
-         vectors = textExtractor(extractor,method=method,\
-                                     inputFile=inputFile,cbow=cbow)
-        # save
+        print("for all lines at once",end = " ");
 
+        vectors = np.zeros((nlines,dimensionality),dtype=np.float32)
+        
+        if debug_mode:
+            pass
+        else:
+            for idx,line in enumerate(lines):
+                tmp = extractor.embed(line,cbow=False)
+                vector = np.asarray(tmp._data, dtype=np.float32)
+                #print(type(vector)); print(vector.dtype); print(vector.shape);
+                vectors[idx,:] = vector
+                
+        outputFile = outputPrefix + ".npy";
+        np.savemat(outputFile, vectors)
+        print("done!");
+        
     else:
-        pass
         # loop over lines
+        print("for all prefixes in each line",end = " ");
+        for idx, line in enumerate(lines):
+            if debug_mode:
+                vectors = []
+            else:
+                tmp = extractor.embed(line,cbow=True);
+                vectors = np.asarray(tmp._data, dtype=np.float32)
+                
+            outputFile = outputPrefix + "_" + str(idx+1) + ".npy";
+            np.savemat(outputFile, vectors)
+        print("done!");
+
+
+
+        
+if __name__ == '__main__':
+    
+    main()
