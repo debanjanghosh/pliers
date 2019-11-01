@@ -152,7 +152,7 @@ def main():
                 vectors[idx,:] = vector
                 
         outputFile = outputPrefix + ".npy";
-        np.savemat(outputFile, vectors)
+        np.save(outputFile, vectors)
         print("done!");
         
     else:
@@ -166,7 +166,7 @@ def main():
                 vectors = np.asarray(tmp._data, dtype=np.float32)
                 
             outputFile = outputPrefix + "_" + str(idx+1) + ".npy";
-            np.savemat(outputFile, vectors)
+            np.save(outputFile, vectors)
         print("done!");
 
 
